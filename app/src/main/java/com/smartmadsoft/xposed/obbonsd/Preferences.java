@@ -1,24 +1,35 @@
 package com.smartmadsoft.xposed.obbonsd;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.Preference;
 import android.preference.SwitchPreference;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 
 import java.io.File;
+import java.util.List;
 
 public class Preferences extends AppCompatPreferenceActivity {
     Preference prefAlternative;
     Preference prefLabelPathInternal;
+
+    static boolean showWarning = false;
 
     @SuppressWarnings("deprecation")
     @Override
@@ -57,6 +68,54 @@ public class Preferences extends AppCompatPreferenceActivity {
         printAltSummary(prefAlternative, ((SwitchPreference) prefAlternative).isChecked());
 
         printPathInternalSummary(prefLabelPathInternal);
+
+        showWarning = true;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (showWarning)
+            detectAndShowXposedDialog();
+    }
+
+    void detectAndShowXposedDialog() {
+        if (isXposedPresent())
+            return;
+
+        AlertDialog.Builder builder;
+        builder = new AlertDialog.Builder(this, R.style.AppCompatAlertDialogStyle);
+        builder.setTitle("Xposed framework not found");
+        builder.setMessage("This app is a Xposed module and requires Xposed framework to work");
+        builder.setPositiveButton("Ok, quit", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                finish();
+            }
+        });
+        builder.setNeutralButton("Find out more", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String url = "http://repo.xposed.info/module/de.robv.android.xposed.installer";
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(url));
+                startActivity(i);
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
+
+    boolean isXposedPresent() {
+        final PackageManager pm = getPackageManager();
+        List<ApplicationInfo> packages = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+
+        for (ApplicationInfo packageInfo : packages) {
+            if (packageInfo.packageName.equals("de.robv.android.xposed.installer"))
+                return true;
+        }
+        return false;
     }
 
     @Override
@@ -64,6 +123,9 @@ public class Preferences extends AppCompatPreferenceActivity {
         switch (item.getItemId()) {
             case R.id.action_ads:
                 Deluxe.openPlayStore(getApplicationContext());
+                return true;
+            case R.id.hide_icon:
+                toggleIcon();
                 return true;
             case android.R.id.home:
                 finish();
@@ -76,8 +138,13 @@ public class Preferences extends AppCompatPreferenceActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        if (Deluxe.showMenu(getApplicationContext()))
-            getMenuInflater().inflate(R.menu.menu_main, menu);
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        if (!Deluxe.showUpgradeMenu(getApplicationContext()))
+            menu.findItem(R.id.action_ads).setVisible(false);
+        if (!isXposedPresent())
+            menu.findItem(R.id.hide_icon).setVisible(false);
+
         return true;
     }
 
@@ -141,6 +208,19 @@ public class Preferences extends AppCompatPreferenceActivity {
         if (pathInternal != null)
             editor.putString("path_internal", pathInternal);
         editor.commit();
+    }
+
+    void toggleIcon() {
+        PackageManager packageManager = getPackageManager();
+        ComponentName componentName = new ComponentName(this, "com.smartmadsoft.xposed.obbonsd.Launch");
+        int newComponentState = PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+        String text = "Launcher icon has been hidden";
+        if (packageManager.getComponentEnabledSetting(componentName) == newComponentState) {
+            newComponentState = PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+            text = "Launcher icon has been restored";
+        }
+        packageManager.setComponentEnabledSetting(componentName, newComponentState, PackageManager.DONT_KILL_APP);
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
     }
 
 }
