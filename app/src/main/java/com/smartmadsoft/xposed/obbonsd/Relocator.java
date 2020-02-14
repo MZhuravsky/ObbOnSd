@@ -29,7 +29,7 @@ public class Relocator implements IXposedHookLoadPackage {
 
     @Override
     public void handleLoadPackage(LoadPackageParam lpparam) throws Throwable {
-        log("Module is started", true);
+        log("Module is started");
 
         systemContext = (Context) XposedHelpers.callMethod(
                 XposedHelpers.callStaticMethod(XposedHelpers.findClass("android.app.ActivityThread", lpparam.classLoader),
@@ -125,11 +125,7 @@ public class Relocator implements IXposedHookLoadPackage {
     }
 
     public static void log(String text) {
-        log(text, false);
-    }
-
-    public static void log(String text, boolean force) {
-        if (DEBUG || force) {
+        if (DEBUG) {
             XposedBridge.log("[" + TAG + "] " + text);
             Log.d(TAG, text);
         }
