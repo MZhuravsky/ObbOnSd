@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -23,7 +22,6 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 
 import java.io.File;
-import java.util.List;
 
 public class Preferences extends AppCompatPreferenceActivity {
     Preference prefAlternative;
@@ -108,14 +106,16 @@ public class Preferences extends AppCompatPreferenceActivity {
     }
 
     boolean isXposedPresent() {
-        final PackageManager pm = getPackageManager();
+        /*final PackageManager pm = getPackageManager();
         List<ApplicationInfo> packages = pm.getInstalledApplications(PackageManager.GET_META_DATA);
 
         for (ApplicationInfo packageInfo : packages) {
             if (packageInfo.packageName.equals("de.robv.android.xposed.installer"))
                 return true;
         }
-        return false;
+        return false;*/
+
+        return true;
     }
 
     @Override

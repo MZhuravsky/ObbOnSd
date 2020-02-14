@@ -1,10 +1,11 @@
 package com.smartmadsoft.xposed.obbonsd;
 
+import android.os.Environment;
+import android.util.Log;
+
 import java.io.File;
 import java.util.ArrayList;
 
-import android.os.Environment;
-import android.util.Log;
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
@@ -33,6 +34,7 @@ public class Relocator implements IXposedHookZygoteInit, IXposedHookLoadPackage 
 
     @Override
     public void handleLoadPackage(LoadPackageParam lpparam) throws Throwable {
+        log("Module is started", true);
 
         if (prefs.getBoolean("enable_playstorehooks", false))
             if (lpparam.packageName.equals("com.android.providers.downloads.ui") || lpparam.packageName.equals("com.android.vending")) {
@@ -123,7 +125,11 @@ public class Relocator implements IXposedHookZygoteInit, IXposedHookLoadPackage 
     }
 
     void log(String text) {
-        if (DEBUG) {
+        log(text, false);
+    }
+
+    void log(String text, boolean force) {
+        if (DEBUG || force) {
             XposedBridge.log("[" + TAG + "] " + text);
             Log.d(TAG, text);
         }
