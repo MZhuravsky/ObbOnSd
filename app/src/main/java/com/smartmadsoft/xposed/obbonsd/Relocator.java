@@ -32,52 +32,52 @@ public class Relocator implements IXposedHookLoadPackage {
         log("Module is started", true);
 
         systemContext = (Context) XposedHelpers.callMethod(
-                XposedHelpers.callStaticMethod( XposedHelpers.findClass("android.app.ActivityThread", lpparam.classLoader),
-                        "currentActivityThread"), "getSystemContext" );
+                XposedHelpers.callStaticMethod(XposedHelpers.findClass("android.app.ActivityThread", lpparam.classLoader),
+                        "currentActivityThread"), "getSystemContext");
 
-            if (lpparam.packageName.equals("com.android.providers.downloads.ui") || lpparam.packageName.equals("com.android.vending")) {
-                if (!Prefs.getHookedBool(systemContext, "enable_playstorehooks", false))
-                    return;
-
-                setPaths();
-
-                if (realExternal == null)
-                    return;
-
-                XposedHelpers.findAndHookConstructor("java.io.File", lpparam.classLoader, String.class, new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        if (param.args[0].toString().startsWith(realExternal))
-                            return;
-                        if (param.args[0].toString().endsWith(".obb"))
-                            if (isObbOnSd(getPkgFromFullPath(param.args[0].toString())))
-                                param.args[0] = param.args[0].toString().replaceFirst("^" + realInternal, realExternal);
-                    }
-                });
-
-                XposedHelpers.findAndHookConstructor("java.io.File", lpparam.classLoader, String.class, String.class, new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        if (param.args[0].toString().startsWith(realExternal))
-                            return;
-                        if (param.args[1].toString().endsWith(".obb"))
-                            if (isObbOnSd(getPkgFromPath(param.args[0].toString())))
-                                param.args[0] = param.args[0].toString().replaceFirst("^" + realInternal, realExternal);
-                    }
-                });
-
-                XposedBridge.hookAllMethods(XposedHelpers.findClass("java.io.File", lpparam.classLoader), "renameTo", new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                        if (param.args[0].toString().startsWith(realExternal))
-                            return;
-                        if (param.args[0].toString().endsWith(".obb"))
-                            if (isObbOnSd(getPkgFromFullPath(param.args[0].toString())))
-                                param.args[0] = new File(param.args[0].toString().replaceFirst("^" + realInternal, realExternal));
-                    }
-                });
+        if (lpparam.packageName.equals("com.android.providers.downloads.ui") || lpparam.packageName.equals("com.android.vending")) {
+            if (!Prefs.getHookedBool(systemContext, "enable_playstorehooks", false))
                 return;
-            }
+
+            setPaths();
+
+            if (realExternal == null)
+                return;
+
+            XposedHelpers.findAndHookConstructor("java.io.File", lpparam.classLoader, String.class, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    if (param.args[0].toString().startsWith(realExternal))
+                        return;
+                    if (param.args[0].toString().endsWith(".obb"))
+                        if (isObbOnSd(getPkgFromFullPath(param.args[0].toString())))
+                            param.args[0] = param.args[0].toString().replaceFirst("^" + realInternal, realExternal);
+                }
+            });
+
+            XposedHelpers.findAndHookConstructor("java.io.File", lpparam.classLoader, String.class, String.class, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    if (param.args[0].toString().startsWith(realExternal))
+                        return;
+                    if (param.args[1].toString().endsWith(".obb"))
+                        if (isObbOnSd(getPkgFromPath(param.args[0].toString())))
+                            param.args[0] = param.args[0].toString().replaceFirst("^" + realInternal, realExternal);
+                }
+            });
+
+            XposedBridge.hookAllMethods(XposedHelpers.findClass("java.io.File", lpparam.classLoader), "renameTo", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    if (param.args[0].toString().startsWith(realExternal))
+                        return;
+                    if (param.args[0].toString().endsWith(".obb"))
+                        if (isObbOnSd(getPkgFromFullPath(param.args[0].toString())))
+                            param.args[0] = new File(param.args[0].toString().replaceFirst("^" + realInternal, realExternal));
+                }
+            });
+            return;
+        }
 
         if (isExcludedPackage(lpparam.packageName))
             return;
@@ -195,13 +195,13 @@ public class Relocator implements IXposedHookLoadPackage {
     }
 
     String getPkgFromPath(String path) {
-        int start = path.lastIndexOf(File.separator, path.length()-1);
+        int start = path.lastIndexOf(File.separator, path.length() - 1);
         return path.substring(start).replace(File.separator, "");
     }
 
     String getPkgFromFullPath(String path) {
         int end = path.lastIndexOf(File.separator);
-        int start = path.lastIndexOf(File.separator, end-1);
+        int start = path.lastIndexOf(File.separator, end - 1);
         return path.substring(start + 1, end);
     }
 
