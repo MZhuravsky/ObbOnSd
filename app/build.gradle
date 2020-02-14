@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
-    // buildToolsVersion "26.0.3"
+    compileSdkVersion 24
+    buildToolsVersion "24.0.0"
 
     defaultConfig {
         applicationId "com.smartmadsoft.xposed.obbonsd"
         minSdkVersion 15
-        targetSdkVersion 26
-        versionCode 10
-        versionName "0.4.4"
+        targetSdkVersion 23
+        versionCode 9
+        versionName "0.4.3"
     }
     buildTypes {
         release {
@@ -20,7 +20,7 @@ android {
 }
 
 dependencies {
-    compileOnly fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'com.android.support:appcompat-v7:26.1.0'
-    implementation 'com.google.android.gms:play-services-ads:17.2.1'
+    provided fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v7:24.0.0'
+    compile 'com.google.android.gms:play-services-ads:9.2.0'
 }
