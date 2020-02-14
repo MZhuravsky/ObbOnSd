@@ -37,6 +37,12 @@
             </intent-filter>
         </activity-alias>
 
+        <provider
+            android:name=".utils.MultiprocessPreferences"
+            android:authorities="@string/multiprocess_preferences_authority"
+            android:exported="true"
+            android:multiprocess="true" />
+
     </application>
 
 </manifest>

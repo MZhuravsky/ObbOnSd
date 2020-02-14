@@ -1,7 +1,6 @@
 package com.smartmadsoft.xposed.obbonsd;
 
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -21,6 +20,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.smartmadsoft.xposed.obbonsd.utils.Prefs;
 
 import java.io.File;
 import java.util.List;
@@ -31,12 +31,9 @@ public class Preferences extends AppCompatPreferenceActivity {
 
     static boolean showWarning = false;
 
-    @SuppressWarnings("deprecation")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        getPreferenceManager().setSharedPreferencesMode(Context.MODE_WORLD_READABLE);
 
         addPreferencesFromResource(R.layout.preferences);
 
@@ -69,7 +66,8 @@ public class Preferences extends AppCompatPreferenceActivity {
 
         printPathInternalSummary(prefLabelPathInternal);
 
-        showWarning = true;
+        // Do not show xposed warn: may be edxposed
+        // showWarning = true;
     }
 
     @Override
@@ -78,6 +76,17 @@ public class Preferences extends AppCompatPreferenceActivity {
 
         if (showWarning)
             detectAndShowXposedDialog();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        SharedPreferences settings = getPreferenceManager().getDefaultSharedPreferences(this);
+        Prefs.setBool(this, "enable_dataonsd", settings.getBoolean("enable_dataonsd", false));
+        Prefs.setBool(this, "enable_playstorehooks", settings.getBoolean("enable_playstorehooks", false));
+        Prefs.setBool(this, "enable_alternative", settings.getBoolean("enable_alternative", false));
+        Prefs.setString(this, "label-path_internal", settings.getString("label-path_internal", null));
     }
 
     void detectAndShowXposedDialog() {
@@ -201,6 +210,9 @@ public class Preferences extends AppCompatPreferenceActivity {
     }
 
     void savePath(String path, String pathInternal) {
+        Prefs.setString(this, "path", path);
+        Prefs.setString(this, "path_internal", pathInternal);
+
         SharedPreferences settings = getPreferenceManager().getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = settings.edit();
         if (path != null)

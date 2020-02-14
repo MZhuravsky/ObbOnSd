@@ -1,43 +1,43 @@
 package com.smartmadsoft.xposed.obbonsd;
 
+import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
+
+import com.smartmadsoft.xposed.obbonsd.utils.Prefs;
 
 import java.io.File;
 import java.util.ArrayList;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
-import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam;
 
-public class Relocator implements IXposedHookZygoteInit, IXposedHookLoadPackage {
+public class Relocator implements IXposedHookLoadPackage {
 
     public static final String PACKAGE_NAME = Relocator.class.getPackage().getName();
-    private static XSharedPreferences prefs;
 
     public static final boolean DEBUG = false;
     public static final String TAG = "ObbOnSd";
 
+    Context systemContext;
     String namespace;
     String realInternal;
     String realExternal;
 
     @Override
-    public void initZygote(IXposedHookZygoteInit.StartupParam startupParam) throws Throwable {
-        prefs = new XSharedPreferences(PACKAGE_NAME);
-        prefs.makeWorldReadable();
-    }
-
-    @Override
     public void handleLoadPackage(LoadPackageParam lpparam) throws Throwable {
         log("Module is started", true);
 
-        if (prefs.getBoolean("enable_playstorehooks", false))
+        systemContext = (Context) XposedHelpers.callMethod(
+                XposedHelpers.callStaticMethod( XposedHelpers.findClass("android.app.ActivityThread", lpparam.classLoader),
+                        "currentActivityThread"), "getSystemContext" );
+
             if (lpparam.packageName.equals("com.android.providers.downloads.ui") || lpparam.packageName.equals("com.android.vending")) {
+                if (!Prefs.getHookedBool(systemContext, "enable_playstorehooks", false))
+                    return;
 
                 setPaths();
 
@@ -124,11 +124,11 @@ public class Relocator implements IXposedHookZygoteInit, IXposedHookLoadPackage 
         log(namespace + " hooked");
     }
 
-    void log(String text) {
+    public static void log(String text) {
         log(text, false);
     }
 
-    void log(String text, boolean force) {
+    public static void log(String text, boolean force) {
         if (DEBUG || force) {
             XposedBridge.log("[" + TAG + "] " + text);
             Log.d(TAG, text);
@@ -183,7 +183,7 @@ public class Relocator implements IXposedHookZygoteInit, IXposedHookLoadPackage 
     }
 
     boolean isDataOnSd(String packageName) {
-        if (!prefs.getBoolean("enable_dataonsd", false))
+        if (!Prefs.getHookedBool(systemContext, "enable_dataonsd", false))
             return false;
 
         File dataDir = new File(realExternal + "/Android/data/" + packageName + "/");
@@ -206,9 +206,9 @@ public class Relocator implements IXposedHookZygoteInit, IXposedHookLoadPackage 
     }
 
     void setPaths() {
-        realInternal = prefs.getString("path_internal", Environment.getExternalStorageDirectory().getPath());
-        if (prefs.getBoolean("enable_alternative", false)) {
-            realExternal = prefs.getString("path", null);
+        realInternal = Prefs.getHookedString(systemContext, "path_internal", Environment.getExternalStorageDirectory().getPath());
+        if (Prefs.getHookedBool(systemContext, "enable_alternative", false)) {
+            realExternal = Prefs.getHookedString(systemContext, "path", null);
         } else {
             String env = System.getenv("SECONDARY_STORAGE");
             if (env == null)
